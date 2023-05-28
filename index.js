@@ -28,9 +28,16 @@ async function run() {
 
         // server to connect mongodb database
         const menuCollection = client.db("SMrestroDB").collection("Menu");
+        const reviewsCollection = client.db("SMrestroDB").collection("reviews");
         // all menu data receive http://localhost:5000/menu
         app.get('/menu', async(req,res) => {
             const result = await menuCollection.find().toArray()
+            res.send(result)
+        })
+        // all review data receive http://localhost:5000/review
+
+        app.get('/reviews', async(req,res) => {
+            const result = await reviewsCollection.find().toArray()
             res.send(result)
         })
 
