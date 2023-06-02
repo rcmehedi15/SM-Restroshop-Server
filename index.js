@@ -36,8 +36,14 @@ async function run() {
         // user related api 
         app.post('/users',async(req,res) =>{
             const user = req.body;
-            const result = await usersCollection.insertOne(user);
+            const query = {email: user.email}
+            const existingUser = await usersCollection.findOne(query);
+            console.log(existingUser);
+            if(existingUser){
+                return res.send({message: 'user already exits'})
+            }
             res.send(result);
+            const result = await usersCollection.insertOne(user);
         })
         // all menu data receive http://localhost:5000/menu
         app.get('/menu', async (req, res) => {
