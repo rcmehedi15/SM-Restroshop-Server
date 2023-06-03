@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -32,19 +34,47 @@ async function run() {
         const reviewsCollection = client.db("SMrestroDB").collection("reviews");
         const cartCollection = client.db("SMrestroDB").collection("carts");
 
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1h'
+            });
+            res.send({token})
+        });
+
+        // user get 
+        app.get('/users', async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
 
         // user related api 
-        app.post('/users',async(req,res) =>{
+        app.post('/users', async (req, res) => {
             const user = req.body;
-            const query = {email: user.email}
+            const query = { email: user.email }
             const existingUser = await usersCollection.findOne(query);
             console.log(existingUser);
-            if(existingUser){
-                return res.send({message: 'user already exits'})
+            if (existingUser) {
+                return res.send({ message: 'user already exits' })
             }
-            res.send(result);
             const result = await usersCollection.insertOne(user);
+            res.send(result);
         })
+
+        app.patch('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result)
+        })
+
+
+
         // all menu data receive http://localhost:5000/menu
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray()
@@ -75,9 +105,9 @@ async function run() {
 
         })
 
-        app.delete('/carts/:id',async(req,res) =>{
+        app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await cartCollection.deleteOne(query);
             res.send(result);
         })
