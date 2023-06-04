@@ -66,7 +66,7 @@ async function run() {
             const query = { email: email }
             const user = await usersCollection.findOne(query);
             if (user?.role !== 'admin') {
-                return res.status(403).send({ errror: true, message:  'forbidden Message'});
+                return res.status(403).send({ errror: true, message: 'forbidden Message' });
             }
             next();
         }
@@ -76,20 +76,24 @@ async function run() {
         -------------------
             Basic
         -------------------
-        0. Do not show secure links to those who should not see the links
-        1. use jwt tokon : verifyJWT
-        2. use verifyAdmin middleware
+        1. Do not show secure links to those who should not see the links
+        only show to the person/types of user who should see it
+
+        2.do not allow to visit the link by typing on the url
+        use adimnRoute that will check wheater the user is admin or not if 
+        not admin then redirect to any other page .you could logout user and send them to the login page as well    
         --------------------------
         To send Data 
         -------------------------
-        1. verify jwt token
+        1. verify jwt token(send authorization token in the header to server).
+        if possible use axios to send jwt token by intercepting the request
         2. if it is an admin activity.Make sure onlyu admin user in posting data by using verifyJWT
         */
 
 
 
         // user get  apis 
-        app.get('/users', verifyJWT,verifyAdmin, async (req, res) => {
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
@@ -140,11 +144,19 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/menu', async(req,res) => {
+        app.post('/menu', async (req, res) => {
             const newItem = req.body
             const result = await menuCollection.insertOne(newItem);
             res.send(result);
         })
+
+        app.delete('/menu/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await menuCollection.deleteOne(query);
+            res.send(result);
+        })
+
 
         // all review data receive http://localhost:5000/reviews
 
