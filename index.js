@@ -72,10 +72,18 @@ async function run() {
         }
 
         /* 
+
+        -------------------
+            Basic
+        -------------------
         0. Do not show secure links to those who should not see the links
         1. use jwt tokon : verifyJWT
         2. use verifyAdmin middleware
-        
+        --------------------------
+        To send Data 
+        -------------------------
+        1. verify jwt token
+        2. if it is an admin activity.Make sure onlyu admin user in posting data by using verifyJWT
         */
 
 
@@ -131,6 +139,13 @@ async function run() {
             const result = await menuCollection.find().toArray()
             res.send(result)
         })
+
+        app.post('/menu', async(req,res) => {
+            const newItem = req.body
+            const result = await menuCollection.insertOne(newItem);
+            res.send(result);
+        })
+
         // all review data receive http://localhost:5000/reviews
 
         app.get('/reviews', async (req, res) => {
