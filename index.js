@@ -216,8 +216,8 @@ async function run() {
         // payment realted api
         app.post('/payments', verifyJWT, async (req, res) => {
             const payment = req.body;
+            payment.menuItems = payment.menuItems.map(item => new ObjectId(item))
             const insertResult = await paymentCollection.insertOne(payment);
-
             const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
             const deleteResult = await cartCollection.deleteMany(query);
 
@@ -255,7 +255,7 @@ async function run() {
    * 7. for each category use reduce to get the total amount spent on this category
    * 
   */
-        app.get('/order-stats',async (req, res) => {
+        app.get('/order-stats', async (req, res) => {
             const pipeline = [
                 {
                     $lookup: {
@@ -286,6 +286,7 @@ async function run() {
             ];
 
             const result = await paymentCollection.aggregate(pipeline).toArray()
+            console.log(result);
             res.send(result)
 
         })
