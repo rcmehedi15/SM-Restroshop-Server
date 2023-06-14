@@ -2,10 +2,38 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const nodemailer = require("nodemailer");
 require('dotenv').config()
 const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
+
+// send payment confirmation email
+const sendPaymentConfirmationEmail = payment => {
+    transporter.sendMail({
+        from: "SENDER_EMAIL", // verified sender email
+        to: "RECIPIENT_EMAIL", // recipient email
+        subject: "Your Order is confirmed.Enjoy!", // Subject line
+        text: "Hello world!", // plain text body
+        html: "<b>Hello world!</b>", // html body
+      }, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+}
+
+let transporter = nodemailer.createTransport({
+    host: 'smtp.sendgrid.net',
+    port: 587,
+    auth: {
+        user: "apikey",
+        pass: process.env.SENDGRID_API_KEY
+    }
+ })
 
 // middle ware 
 app.use(cors());
@@ -223,6 +251,9 @@ async function run() {
 
             res.send({ insertResult, deleteResult })
         })
+
+        // send an email
+        console.log(payment);
 
         app.get('/admin-stats', verifyJWT, verifyAdmin, async (req, res) => {
             const users = await usersCollection.estimatedDocumentCount();
