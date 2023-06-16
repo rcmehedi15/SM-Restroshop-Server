@@ -3,20 +3,36 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer");
+const mg = require('nodemailer-mailgun-transport');
 require('dotenv').config()
 const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
+
+
+const auth = {
+    auth: {
+      api_key: process.env.EMAIL_PRIVATE_KEY,
+      domain: process.env.EMAIL_DOMAIN
+    }
+  }
+const transporter = nodemailer.createTransport(mg(auth));
+
 // send payment confirmation email
 const sendPaymentConfirmationEmail = payment => {
     transporter.sendMail({
-        from: "SENDER_EMAIL", // verified sender email
-        to: "RECIPIENT_EMAIL", // recipient email
+        from: "mdmehedihasan20188@gmail.com", // verified sender email
+        to:"mdmehedihasan20188@gmail.com", // recipient email
         subject: "Your Order is confirmed.Enjoy!", // Subject line
         text: "Hello world!", // plain text body
-        html: "<b>Hello world!</b>", // html body
+        html: `
+        <div>
+            <h2>Payment Done!</h2>
+            <P>Transaction ID : ${payment.transactionId}</P>
+        </div>
+        `, // html body
       }, function(error, info){
         if (error) {
           console.log(error);
@@ -25,15 +41,6 @@ const sendPaymentConfirmationEmail = payment => {
         }
       });
 }
-
-let transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    auth: {
-        user: "apikey",
-        pass: process.env.SENDGRID_API_KEY
-    }
- })
 
 // middle ware 
 app.use(cors());
@@ -250,10 +257,11 @@ async function run() {
             const deleteResult = await cartCollection.deleteMany(query);
 
             res.send({ insertResult, deleteResult })
+            sendPaymentConfirmationEmail(payment)
+            console.log(payment);
         })
 
         // send an email
-        console.log(payment);
 
         app.get('/admin-stats', verifyJWT, verifyAdmin, async (req, res) => {
             const users = await usersCollection.estimatedDocumentCount();
